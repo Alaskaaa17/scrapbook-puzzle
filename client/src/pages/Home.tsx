@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Sparkles,
   Sticker,
+  Timer,
   Video,
   X,
 } from "lucide-react";
@@ -44,6 +45,7 @@ const frameColors = [
 ];
 
 const stickerOptions = ["✦", "♡", "☁", "♫", "✿", "✷"];
+const timerOptions = [3, 5, 10] as const;
 
 /** No-camera fallback so the puzzle stays playable without a photo source. */
 const demoTileGradients = [
@@ -79,6 +81,7 @@ export default function Home() {
   const [gridSize, setGridSize] = useState<3 | 4>(3);
   const [photoCount, setPhotoCount] = useState<2 | 3 | 4>(3);
   const [filter, setFilter] = useState<FilterId>("Original");
+  const [timerSeconds, setTimerSeconds] = useState<(typeof timerOptions)[number]>(3);
   const [frameColor, setFrameColor] = useState(frameColors[0].value);
   const [memory, setMemory] = useState("a little moment worth keeping");
   const [cameraError, setCameraError] = useState("");
@@ -111,7 +114,7 @@ export default function Home() {
 
   const triggerCountdown = () => {
     if (!solved || countdown !== null) return;
-    setCountdown(3);
+    setCountdown(timerSeconds);
   };
 
   const finishCountdown = () => {
@@ -287,6 +290,10 @@ export default function Home() {
               <div className="section-label"><span>03</span><div><strong>Light leak</strong><small>Choose the mood</small></div></div>
               <div className="filter-row">{filters.map((item) => <button key={item.label} className={`filter-choice ${filter === item.label ? "selected" : ""}`} onClick={() => setFilter(item.label)}><span className="filter-swatch" style={{ background: item.sample }} /><span>{item.label}</span></button>)}</div>
             </div>
+            <div className="form-section filter-section">
+              <div className="section-label"><span>04</span><div><strong>Countdown</strong><small>Seconds after your fist before it snaps</small></div></div>
+              <div className="filter-row">{timerOptions.map((seconds) => <button key={seconds} className={`filter-choice ${timerSeconds === seconds ? "selected" : ""}`} onClick={() => setTimerSeconds(seconds)}><Timer size={14} /><span>{seconds}s</span></button>)}</div>
+            </div>
             <button className="primary-cta" onClick={startCamera}><Camera size={19} /> Start creating <ArrowRight size={18} /></button>
             <div className="board-footer"><span>camera permission required</span><span className="footer-scribble">let's make something sweet ↗</span></div>
           </div>
@@ -335,7 +342,7 @@ export default function Home() {
                 })}
               </div>
               <div className="game-actions"><button className="text-button" onClick={() => { setTiles(shufflePuzzle(gridSize)); setSolved(false); setHoverTile(-1); }}><RotateCcw size={14} /> scramble</button><span className="action-rule" /><span className="gesture-key"><span className="gesture-circle"><Hand size={15} /></span><span><b>PINCH</b><small>to slide</small></span></span><button className="finish-button" onClick={triggerCountdown} disabled={!solved || countdown !== null}><span>Make a fist</span><ChevronRight size={16} /></button></div>
-              {solved && countdown === null && <div className="solved-note"><Sparkles size={14} /> Puzzle unlocked — make a fist to take the photo.</div>}
+              {solved && countdown === null && <div className="solved-note"><Sparkles size={14} /> Puzzle unlocked — make a fist for a {timerSeconds}s countdown to the photo.</div>}
             </div>
           </div>
           <div className="puzzle-footer"><span><span className="footer-key">esc</span> to leave the studio</span><span>gesture tracking is local &amp; private <LockKeyhole size={13} /></span></div>
