@@ -90,9 +90,12 @@ export function useHandTracking({ videoRef, overlayCanvasRef, enabled, onFrame }
     const hands = new win.Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@${HANDS_VERSION}/${file}`,
     });
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+    // modelComplexity 0 (the fast/lite model) is prone to false-positive
+    // "hand" detections on faces at typical webcam framing — the full model
+    // (1) plus a higher confidence floor filters that out.
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.8, minTrackingConfidence: 0.75 });
 
-    hands.onResults((results: { multiHandLandmarks?: Landmark[][] }) => {
+    hands.onResults((results: { multiHandLandmarks?: Landmark[][]; multiHandedness?: { score: number }[] }) => {
       if (cancelled) return;
       const rect = video.getBoundingClientRect();
       if (canvas.width !== rect.width || canvas.height !== rect.height) {
@@ -102,7 +105,12 @@ export function useHandTracking({ videoRef, overlayCanvasRef, enabled, onFrame }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const landmarksList = results.multiHandLandmarks;
-      const hasHand = !!landmarksList && landmarksList.length > 0;
+      // multiHandedness's score is the model's confidence this is a real
+      // left/right hand, a separate signal from detection confidence — a
+      // face-shaped false positive tends to score low here even when it
+      // clears minDetectionConfidence.
+      const handednessScore = results.multiHandedness?.[0]?.score ?? 0;
+      const hasHand = !!landmarksList && landmarksList.length > 0 && handednessScore >= 0.85;
 
       const state: HandFrameState = {
         detected: false,
