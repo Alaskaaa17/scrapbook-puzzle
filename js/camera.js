@@ -134,7 +134,7 @@ export class CameraController {
     this.ctx.strokeRect(box.x + 1, box.y + 1, box.w - 2, box.h - 2);
 
     const gestureFrame = this.gesture.detect(this.video, performance.now());
-    if (gestureFrame.landmarks) this._drawSkeleton(gestureFrame.landmarks, coverRect);
+    gestureFrame.landmarksList?.forEach((landmarks) => this._drawSkeleton(landmarks, coverRect));
 
     if (this.state === "countdown") this._renderCountdown(box);
 

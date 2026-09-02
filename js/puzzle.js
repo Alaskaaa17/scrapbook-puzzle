@@ -103,7 +103,10 @@ export class SlidingPuzzle {
     const { x, y, w, h } = rect;
     const cellW = w / this.size;
     const cellH = h / this.size;
-    const srcCell = this.image.width / this.size;
+    // The captured image is 16:10 (matching the capture box), not square,
+    // so width/height cells must be sized separately.
+    const srcCellW = this.image.width / this.size;
+    const srcCellH = this.image.height / this.size;
 
     for (let pos = 0; pos < this.total; pos++) {
       const tile = this.order[pos];
@@ -128,7 +131,7 @@ export class SlidingPuzzle {
       const tileCol = (tile - 1) % this.size;
       ctx.drawImage(
         this.image,
-        tileCol * srcCell, tileRow * srcCell, srcCell, srcCell,
+        tileCol * srcCellW, tileRow * srcCellH, srcCellW, srcCellH,
         dx, dy, cellW, cellH,
       );
 

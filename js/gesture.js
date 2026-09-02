@@ -78,7 +78,7 @@ export class GestureTracker {
       this.landmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: { ...baseOptions, delegate: "GPU" },
         runningMode: "VIDEO",
-        numHands: 1,
+        numHands: 2,
         minHandDetectionConfidence: 0.75,
         minHandPresenceConfidence: 0.7,
         minTrackingConfidence: 0.7,
@@ -88,7 +88,7 @@ export class GestureTracker {
       this.landmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: { ...baseOptions, delegate: "CPU" },
         runningMode: "VIDEO",
-        numHands: 1,
+        numHands: 2,
         minHandDetectionConfidence: 0.75,
         minHandPresenceConfidence: 0.7,
         minTrackingConfidence: 0.7,
@@ -102,6 +102,7 @@ export class GestureTracker {
     const empty = {
       detected: false,
       landmarks: null,
+      landmarksList: [],
       cursor: null,
       pinchPoint: null,
       isPinching: false,
@@ -112,19 +113,28 @@ export class GestureTracker {
     if (!this.ready) return empty;
 
     const result = this.landmarker.detectForVideo(video, timestampMs);
-    const hasHand = result.landmarks && result.landmarks.length > 0 && result.worldLandmarks?.length > 0;
-    const handednessScore = result.handednesses?.[0]?.[0]?.score ?? 0;
-    if (!hasHand || handednessScore < HANDEDNESS_MIN_SCORE) {
-      // Feed "no hand" into the debouncers so a real release is required
-      // before the next confirm, but don't erode a transient dropout.
+    const handCount = result.landmarks?.length ?? 0;
+
+    // Either hand can drive gestures — collect every hand that clears the
+    // handedness-confidence gate (not just the first one MediaPipe returns).
+    const validHands = [];
+    for (let i = 0; i < handCount; i++) {
+      const score = result.handednesses?.[i]?.[0]?.score ?? 0;
+      if (score >= HANDEDNESS_MIN_SCORE && result.worldLandmarks?.[i]) {
+        validHands.push({ landmarks: result.landmarks[i], world: result.worldLandmarks[i] });
+      }
+    }
+    if (validHands.length === 0) {
+      // No confident hand this frame: don't touch the debouncers (a brief
+      // dropout for one hand shouldn't erode a still-held gesture on the
+      // other), just report nothing detected.
       return empty;
     }
 
-    const landmarks = result.landmarks[0];
-    const world = result.worldLandmarks[0];
-
-    const pinchJustConfirmed = this.pinchDebounce.update(computeIsPinching(world));
-    const fistJustConfirmed = this.fistDebounce.update(computeIsFist(world));
+    const rawPinchPerHand = validHands.map((h) => computeIsPinching(h.world));
+    const rawFistPerHand = validHands.map((h) => computeIsFist(h.world));
+    const pinchJustConfirmed = this.pinchDebounce.update(rawPinchPerHand.some(Boolean));
+    const fistJustConfirmed = this.fistDebounce.update(rawFistPerHand.some(Boolean));
 
     const now = performance.now();
     const offCooldown = now >= this.cooldownUntil;
@@ -132,11 +142,17 @@ export class GestureTracker {
     const fistStarted = fistJustConfirmed && offCooldown && !pinchStarted;
     if (pinchStarted || fistStarted) this.cooldownUntil = now + COOLDOWN_MS;
 
+    // Whichever hand is actually pinching drives the cursor/drag point, so a
+    // mid-drag switch of hands doesn't snap the tile to a different hand.
+    const activeIndex = rawPinchPerHand.findIndex(Boolean);
+    const active = validHands[activeIndex >= 0 ? activeIndex : 0];
+
     return {
       detected: true,
-      landmarks,
-      cursor: { x: landmarks[9].x, y: landmarks[9].y },
-      pinchPoint: { x: (landmarks[4].x + landmarks[8].x) / 2, y: (landmarks[4].y + landmarks[8].y) / 2 },
+      landmarks: active.landmarks,
+      landmarksList: validHands.map((h) => h.landmarks),
+      cursor: { x: active.landmarks[9].x, y: active.landmarks[9].y },
+      pinchPoint: { x: (active.landmarks[4].x + active.landmarks[8].x) / 2, y: (active.landmarks[4].y + active.landmarks[8].y) / 2 },
       isPinching: this.pinchDebounce.isConfirmed,
       isFist: this.fistDebounce.isConfirmed,
       pinchStarted,
