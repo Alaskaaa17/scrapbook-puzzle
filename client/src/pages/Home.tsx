@@ -76,8 +76,12 @@ function AppMark() {
   );
 }
 
+const DEBUG_ENABLED = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("debug");
+
 export default function Home() {
   const [step, setStep] = useState<Step>("setup");
+  const [eventLog, setEventLog] = useState<string[]>([]);
+  const startedAtRef = useRef(performance.now());
   const [gridSize, setGridSize] = useState<3 | 4>(3);
   const [photoCount, setPhotoCount] = useState<2 | 3 | 4>(3);
   const [filter, setFilter] = useState<FilterId>("Original");
@@ -103,21 +107,33 @@ export default function Home() {
 
   const currentFilter = useMemo(() => filters.find((item) => item.label === filter) ?? filters[0], [filter]);
 
-  const moveTile = (index: number) => {
+  const logEvent = (message: string) => {
+    if (!DEBUG_ENABLED) return;
+    const elapsed = ((performance.now() - startedAtRef.current) / 1000).toFixed(2);
+    setEventLog((prev) => [...prev.slice(-14), `${elapsed}s  ${message}`]);
+  };
+
+  const moveTile = (index: number, source: "click" | "pinch") => {
     if (solved || countdown !== null) return;
     const next = slideTile(tiles, gridSize, index);
     if (!next) return;
+    logEvent(`slide tile @${index} via ${source}`);
     setTiles(next);
     setHoverTile(-1);
-    if (isSolved(next)) setSolved(true);
+    if (isSolved(next)) {
+      logEvent("puzzle solved");
+      setSolved(true);
+    }
   };
 
-  const triggerCountdown = () => {
+  const triggerCountdown = (source: "click" | "fist") => {
     if (!solved || countdown !== null) return;
+    logEvent(`countdown started (${timerSeconds}s) via ${source}`);
     setCountdown(timerSeconds);
   };
 
-  const finishCountdown = () => {
+  const finishCountdown = (source: "timer" | "fist-skip") => {
+    logEvent(`capture fired via ${source}`);
     setCountdown(null);
     const video = videoRef.current;
     const shot = video && video.readyState >= 2 ? captureSquareFrame(video, 640, filter) : null;
@@ -125,6 +141,7 @@ export default function Home() {
     setPhotos(nextPhotos);
 
     if (nextPhotos.length >= photoCount) {
+      logEvent("all rounds done -> strip");
       stopCamera();
       setStep("strip");
       return;
@@ -140,7 +157,7 @@ export default function Home() {
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {
-      const timer = window.setTimeout(() => finishCountdown(), 450);
+      const timer = window.setTimeout(() => finishCountdown("timer"), 450);
       return () => window.clearTimeout(timer);
     }
     const timer = window.setTimeout(() => setCountdown((value) => (value === null ? null : value - 1)), 1000);
@@ -149,12 +166,15 @@ export default function Home() {
   }, [countdown]);
 
   const handleHandFrame = (state: HandFrameState) => {
+    if (state.pinchStarted) logEvent("gesture: pinchStarted");
+    if (state.fistStarted) logEvent("gesture: fistStarted");
+
     if (countdown !== null) {
-      if (state.fistStarted) finishCountdown();
+      if (state.fistStarted) finishCountdown("fist-skip");
       return;
     }
     if (solved) {
-      if (state.fistStarted) triggerCountdown();
+      if (state.fistStarted) triggerCountdown("fist");
       return;
     }
     if (!state.detected || !state.cursorFraction) {
@@ -167,7 +187,7 @@ export default function Home() {
     const emptyPos = tiles.indexOf(0);
     const movable = neighborsOf(emptyPos, gridSize).includes(pos);
     setHoverTile(movable ? pos : -1);
-    if (state.pinchStarted && movable) moveTile(pos);
+    if (state.pinchStarted && movable) moveTile(pos, "pinch");
   };
 
   const { status: gestureStatus } = useHandTracking({
@@ -186,6 +206,9 @@ export default function Home() {
   useEffect(() => stopCamera, []);
 
   const startCamera = async () => {
+    startedAtRef.current = performance.now();
+    setEventLog([]);
+    logEvent("Start Creating clicked");
     setStep("puzzle");
     setCameraError("");
     setCameraMessage("requesting camera access");
@@ -205,11 +228,13 @@ export default function Home() {
       streamRef.current = stream;
       setCameraReady(true);
       setPuzzleImage(makePuzzleImage(video));
+      logEvent("camera ready, puzzle scrambled");
     } catch {
       setCameraReady(false);
       setPuzzleImage(null);
       setCameraMessage("demo mode · camera unavailable");
       setCameraError("Camera access is off, so we opened a playful demo mode. You can still solve the puzzle and make a strip.");
+      logEvent("camera denied/unavailable -> demo mode");
     }
   };
 
@@ -324,7 +349,7 @@ export default function Home() {
                 {tiles.map((tile, index) => {
                   const isHover = hoverTile === index;
                   if (tile === 0) {
-                    return <button key={`empty-${index}`} className={`puzzle-tile empty ${isHover ? "hover-target" : ""}`} onClick={() => moveTile(index)} aria-label="Empty tile" />;
+                    return <button key={`empty-${index}`} className={`puzzle-tile empty ${isHover ? "hover-target" : ""}`} onClick={() => moveTile(index, "click")} aria-label="Empty tile" />;
                   }
                   const style = puzzleImage
                     ? {
@@ -334,19 +359,20 @@ export default function Home() {
                       }
                     : { background: demoTileGradients[(tile - 1) % demoTileGradients.length] };
                   return (
-                    <button key={`${tile}-${index}`} className={`puzzle-tile ${isHover ? "hover-target" : ""}`} onClick={() => moveTile(index)} style={style}>
+                    <button key={`${tile}-${index}`} className={`puzzle-tile ${isHover ? "hover-target" : ""}`} onClick={() => moveTile(index, "click")} style={style}>
                       {!puzzleImage && <span className="tile-number">{String(tile).padStart(2, "0")}</span>}
                       <span className="tile-grain" />
                     </button>
                   );
                 })}
               </div>
-              <div className="game-actions"><button className="text-button" onClick={() => { setTiles(shufflePuzzle(gridSize)); setSolved(false); setHoverTile(-1); }}><RotateCcw size={14} /> scramble</button><span className="action-rule" /><span className="gesture-key"><span className="gesture-circle"><Hand size={15} /></span><span><b>PINCH</b><small>to slide</small></span></span><button className="finish-button" onClick={triggerCountdown} disabled={!solved || countdown !== null}><span>Make a fist</span><ChevronRight size={16} /></button></div>
+              <div className="game-actions"><button className="text-button" onClick={() => { setTiles(shufflePuzzle(gridSize)); setSolved(false); setHoverTile(-1); }}><RotateCcw size={14} /> scramble</button><span className="action-rule" /><span className="gesture-key"><span className="gesture-circle"><Hand size={15} /></span><span><b>PINCH</b><small>to slide</small></span></span><button className="finish-button" onClick={() => triggerCountdown("click")} disabled={!solved || countdown !== null}><span>Make a fist</span><ChevronRight size={16} /></button></div>
               {solved && countdown === null && <div className="solved-note"><Sparkles size={14} /> Puzzle unlocked — make a fist for a {timerSeconds}s countdown to the photo.</div>}
             </div>
           </div>
           <div className="puzzle-footer"><span><span className="footer-key">esc</span> to leave the studio</span><span>gesture tracking is local &amp; private <LockKeyhole size={13} /></span></div>
           {countdown !== null && <div className="countdown-overlay"><div className="countdown-paper"><span className="mono-label">GET READY</span><b>{countdown === 0 ? "✦" : countdown}</b><p>{countdown === 0 ? "memory saved" : "hold that thought"}</p></div></div>}
+          {DEBUG_ENABLED && <DebugPanel log={eventLog} />}
         </section>
       )}
 
@@ -382,8 +408,19 @@ export default function Home() {
             </aside>
           </div>
           <div className="strip-footer"><span><Sparkles size={14} /> made with tiny moments &amp; big feelings</span><span>Scrapbook Puzzle Studio · 01</span></div>
+          {DEBUG_ENABLED && <DebugPanel log={eventLog} />}
         </section>
       )}
     </main>
+  );
+}
+
+function DebugPanel({ log }: { log: string[] }) {
+  return (
+    <div style={{ position: "fixed", left: 12, bottom: 12, zIndex: 50, maxWidth: 360, maxHeight: 260, overflowY: "auto", background: "rgba(20,20,20,.92)", color: "#9ef58c", font: "10px/1.5 'Space Mono', monospace", padding: "10px 12px", borderRadius: 6, boxShadow: "0 8px 24px rgba(0,0,0,.35)" }}>
+      <div style={{ color: "#fff", marginBottom: 4 }}>DEBUG LOG (?debug=1)</div>
+      {log.length === 0 && <div>waiting for events…</div>}
+      {log.map((line, index) => <div key={index}>{line}</div>)}
+    </div>
   );
 }
