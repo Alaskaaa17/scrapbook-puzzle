@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Puzzle Cam — Gesture Capture</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: "#2f4f6f",
+          "navy-dark": "#20374e",
+          "surface-bright": "#f6f1e4",
+          cream: "#e9e4d8",
+          pink: "#f4b8c1",
+          "cool-blue": "#a9c8e8",
+        },
+        fontFamily: {
+          display: ["'Space Mono'", "monospace"],
+          type: ["'Courier Prime'", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-surface-bright text-navy-dark font-type">
+
+<nav class="site-nav">
+  <button class="brand" data-nav="landing">Scrapbook Puzzle</button>
+  <div class="nav-links">
+    <button data-nav="landing">HOME</button>
+    <button data-nav="howItWorks">HOW IT WORKS</button>
+    <button data-nav="features">FEATURES</button>
+    <button data-nav="archive">ARCHIVE</button>
+    <button data-nav="contact">CONTACT</button>
+  </div>
+</nav>
+
+<main id="app">
+
+  <!-- ============ 1. LANDING ============ -->
+  <section id="landingPage" class="page active-page">
+    <div class="landing-stage">
+      <img class="polaroid polaroid-left" src="assets/polaroid.svg" alt="" aria-hidden="true" />
+      <img class="polaroid polaroid-right" src="assets/polaroid.svg" alt="" aria-hidden="true" />
+
+      <div class="hero-card paper-card">
+        <div class="washi-tape washi-top-right"></div>
+        <h1 class="hero-title">Scrapbook Puzzle</h1>
+        <p class="hero-tagline">Capture the moment, cherish the magic, relive the love</p>
+        <button id="startCreatingLanding" class="btn-navy">
+          <span class="material-symbols-outlined">photo_camera</span> START CREATING
+        </button>
+        <div class="hero-subactions">
+          <button class="btn-ghost" data-nav="howItWorks">Manual</button>
+          <button class="btn-ghost" data-nav="archive">Gallery</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. SETUP ============ -->
+  <section id="setupPage" class="page">
+    <div class="setup-stage">
+      <div class="paper-card setup-card">
+        <div class="washi-tape washi-top-left"></div>
+
+        <div class="setup-section">
+          <h2 class="setup-heading">01 / SELECT GRID SIZE</h2>
+          <div class="option-row" data-group="gridSize">
+            <button class="option-card" data-value="3">
+              <span class="mini-grid grid-3"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="option-label">3 x 3</span>
+              <span class="material-symbols-outlined option-check">check_circle</span>
+            </button>
+            <button class="option-card" data-value="4">
+              <span class="mini-grid grid-4"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="option-label">4 x 4</span>
+              <span class="material-symbols-outlined option-check">check_circle</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="setup-section">
+          <h2 class="setup-heading">02 / CHOOSE LAYOUT</h2>
+          <div class="option-row" data-group="layout">
+            <button class="option-card" data-value="2"><span class="option-number">2</span><span class="option-label">2 Photos</span><span class="material-symbols-outlined option-check">check_circle</span></button>
+            <button class="option-card" data-value="3"><span class="option-number">3</span><span class="option-label">3 Photos</span><span class="material-symbols-outlined option-check">check_circle</span></button>
+            <button class="option-card" data-value="4"><span class="option-number">4</span><span class="option-label">4 Photos</span><span class="material-symbols-outlined option-check">check_circle</span></button>
+          </div>
+        </div>
+
+        <div class="setup-section">
+          <h2 class="setup-heading">03 / CHOOSE FILTER</h2>
+          <div class="chip-row" data-group="filter">
+            <button class="chip" data-value="original">Original</button>
+            <button class="chip" data-value="bw">B&amp;W</button>
+            <button class="chip" data-value="vintage">Vintage</button>
+            <button class="chip" data-value="sunset">Sunset</button>
+            <button class="chip" data-value="warm">Warm Glow</button>
+            <button class="chip" data-value="cool">Cool Blue</button>
+          </div>
+        </div>
+
+        <button id="startCreatingSetup" class="btn-navy btn-block">START CREATING</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. CAMERA (core) ============ -->
+  <section id="cameraPage" class="page camera-page">
+    <div class="camera-stage">
+      <video id="camVideo" autoplay playsinline muted></video>
+      <canvas id="camCanvas"></canvas>
+
+      <!-- HUD -->
+      <div class="hud-topbar">
+        <div class="hud-pill hud-pill-left">
+          <span class="material-symbols-outlined">grid_view</span> PUZZLE·CAM
+          <button id="fullscreenBtn" class="hud-icon-btn"><span class="material-symbols-outlined">fullscreen</span></button>
+        </div>
+        <div class="hud-center-stack">
+          <div class="hud-pill hud-pill-counter">
+            <span class="material-symbols-outlined">photo_library</span>
+            <span id="photoCounter">0 / 4</span>
+          </div>
+          <div id="thumbStrip" class="thumb-strip"></div>
+        </div>
+        <div class="hud-pill hud-pill-status">
+          <span id="statusDot" class="status-dot"></span>
+          <span id="statusText">MENUNGGU TANGAN...</span>
+        </div>
+      </div>
+
+      <div id="solvedCard" class="solved-card hidden">
+        <div class="solved-title">PUZZLE SOLVED!</div>
+        <div class="solved-sub">make a fist to save</div>
+      </div>
+
+      <div id="cameraErrorBox" class="camera-error-box hidden"></div>
+
+      <button id="camBackBtn" class="cam-back-btn"><span class="material-symbols-outlined">arrow_back</span> Setup</button>
+    </div>
+  </section>
+
+  <!-- ============ 4. PRINTING ============ -->
+  <section id="printingPage" class="page printing-page">
+    <p class="printing-label">Printing your memories...</p>
+    <div class="printer-slot"></div>
+    <div id="printingStrip" class="printing-strip"></div>
+  </section>
+
+  <!-- ============ 5. EDITOR ============ -->
+  <section id="editorPage" class="page editor-page">
+    <div class="editor-stage">
+      <div class="strip-column">
+        <div class="printer-slot printer-slot-small"></div>
+        <div class="strip-wrap">
+          <div class="washi-tape washi-top-left"></div>
+          <div id="editorStrip" class="editor-strip"></div>
+        </div>
+      </div>
+
+      <aside class="editor-panel paper-card">
+        <span class="material-symbols-outlined pin-icon">push_pin</span>
+
+        <div class="panel-block">
+          <div class="panel-label"><span class="material-symbols-outlined">palette</span> Frame Color</div>
+          <div id="frameColorRow" class="color-row">
+            <button class="color-dot" data-color="#2f4f6f" style="background:#2f4f6f"></button>
+            <button class="color-dot" data-color="#f4b8c1" style="background:#f4b8c1"></button>
+            <button class="color-dot" data-color="#e9e4d8" style="background:#e9e4d8"></button>
+            <button class="color-dot" data-color="#ffffff" style="background:#ffffff"></button>
+            <button class="color-dot" data-color="#a9c8e8" style="background:#a9c8e8"></button>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="panel-label"><span class="material-symbols-outlined">auto_fix_high</span> Stickers</div>
+          <div id="stickerGrid" class="sticker-grid">
+            <button class="sticker-btn" data-icon="star">star</button>
+            <button class="sticker-btn" data-icon="favorite">favorite</button>
+            <button class="sticker-btn" data-icon="mood">mood</button>
+            <button class="sticker-btn" data-icon="local_florist">local_florist</button>
+            <button class="sticker-btn" data-icon="cloud">cloud</button>
+            <button class="sticker-btn" data-icon="settings">settings</button>
+            <button class="sticker-btn" data-icon="music_note">music_note</button>
+            <button class="sticker-btn" data-icon="format_quote">format_quote</button>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="panel-label"><span class="material-symbols-outlined">edit_note</span> Memory Log</div>
+          <input id="memoryInput" type="text" class="memory-input" placeholder="Type a memory here..." maxlength="60" />
+          <div id="memoryDate" class="memory-date"></div>
+        </div>
+
+        <button id="editorResetBtn" class="fab-trash"><span class="material-symbols-outlined">delete</span></button>
+        <button id="editorNextBtn" class="btn-navy btn-block">Next: Assemble Puzzle →</button>
+      </aside>
+    </div>
+
+    <div id="exportPreview" class="export-preview hidden">
+      <img id="exportImage" alt="Photo strip" />
+      <a id="exportDownload" class="btn-navy" download="scrapbook-strip.png">Download</a>
+      <button id="exportCloseBtn" class="btn-ghost">Close</button>
+    </div>
+  </section>
+
+  <!-- ============ 6. HOW IT WORKS ============ -->
+  <section id="howItWorksPage" class="page simple-page">
+    <h1 class="simple-title">How It Works</h1>
+    <div class="steps-grid">
+      <div class="step-card"><span class="step-number">01</span><h3>Pilih Setup</h3><p>Tentukan ukuran grid, jumlah foto, dan filter favoritmu.</p></div>
+      <div class="step-card"><span class="step-number">02</span><h3>Pinch untuk Foto</h3><p>Cubit jari (pinch) di depan kamera untuk memulai hitung mundur.</p></div>
+      <div class="step-card"><span class="step-number">03</span><h3>Susun Puzzle</h3><p>Geser potongan foto dengan gestur pinch sampai tersusun sempurna.</p></div>
+      <div class="step-card"><span class="step-number">04</span><h3>Kepal untuk Simpan</h3><p>Kepalkan tangan untuk menyimpan momen ke photostrip-mu.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 7. FEATURES ============ -->
+  <section id="featuresPage" class="page simple-page">
+    <h1 class="simple-title">Features</h1>
+    <div class="steps-grid">
+      <div class="step-card"><span class="material-symbols-outlined feature-icon">extension</span><h3>Gesture Puzzle</h3><p>Susun sliding puzzle langsung dengan gestur tangan, tanpa sentuh apa pun.</p></div>
+      <div class="step-card"><span class="material-symbols-outlined feature-icon">photo_filter</span><h3>6 Filter Vintage</h3><p>Dari B&amp;W klasik sampai Warm Glow yang hangat.</p></div>
+      <div class="step-card"><span class="material-symbols-outlined feature-icon">auto_fix_high</span><h3>Editor Stiker</h3><p>Hias photostrip-mu dengan stiker yang bisa digeser bebas.</p></div>
+      <div class="step-card"><span class="material-symbols-outlined feature-icon">archive</span><h3>Archive Pribadi</h3><p>Semua strip tersimpan rapi di browser-mu, siap diunduh kapan saja.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 8. ARCHIVE ============ -->
+  <section id="archivePage" class="page simple-page">
+    <h1 class="simple-title">Archive</h1>
+    <p id="archiveEmpty" class="archive-empty">Belum ada strip tersimpan. Mulai buat kenangan pertamamu!</p>
+    <div id="archiveGrid" class="archive-grid"></div>
+  </section>
+
+  <!-- ============ 9. CONTACT ============ -->
+  <section id="contactPage" class="page simple-page">
+    <h1 class="simple-title">Contact</h1>
+    <form id="contactForm" class="contact-form paper-card">
+      <label>Name<input type="text" required /></label>
+      <label>Email<input type="email" required /></label>
+      <label>Message<textarea rows="4" required></textarea></label>
+      <button type="submit" class="btn-navy btn-block">Send</button>
+    </form>
+  </section>
+
+</main>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
