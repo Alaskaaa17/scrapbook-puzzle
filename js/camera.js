@@ -106,8 +106,18 @@ export class CameraController {
   }
 
   _boxRect() {
-    const w = this.canvas.width * BOX_WIDTH_FRAC;
-    const h = w / BOX_ASPECT;
+    const isPortrait = this.canvas.height > this.canvas.width;
+    // On a portrait phone screen, half the (narrow) width makes the box
+    // tiny with lots of unused vertical space — widen it, but keep the
+    // resulting height comfortably inside the canvas.
+    const widthFrac = isPortrait ? 0.85 : BOX_WIDTH_FRAC;
+    let w = this.canvas.width * widthFrac;
+    let h = w / BOX_ASPECT;
+    const maxH = this.canvas.height * 0.62;
+    if (h > maxH) {
+      h = maxH;
+      w = h * BOX_ASPECT;
+    }
     return { x: (this.canvas.width - w) / 2, y: (this.canvas.height - h) / 2, w, h };
   }
 

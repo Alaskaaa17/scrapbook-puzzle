@@ -157,8 +157,8 @@ body {
 
 .placed-sticker { position: absolute; font-size: 26px; color: var(--coral-dark); cursor: grab; transform: translate(-50%, -50%); touch-action: none; }
 .placed-sticker .material-symbols-outlined { font-size: 26px !important; filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.25)); }
-.placed-sticker .sticker-remove { position: absolute; top: -10px; right: -10px; width: 16px; height: 16px; background: var(--coral-dark); color: #fff; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px !important; }
-.placed-sticker:hover .sticker-remove { display: flex; }
+.placed-sticker .sticker-remove { position: absolute; top: -9px; right: -9px; width: 18px; height: 18px; background: var(--coral-dark); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px !important; opacity: .55; transition: opacity .15s var(--ease-out); }
+.placed-sticker:hover .sticker-remove, .placed-sticker:active .sticker-remove { opacity: 1; }
 
 .export-preview { position: fixed; inset: 0; z-index: 50; background: rgba(20,16,12,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 .export-preview img { max-height: 70vh; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
@@ -186,8 +186,63 @@ body {
 .contact-form input, .contact-form textarea { border: 1px solid var(--line); border-radius: 3px; padding: 10px; font: 14px 'DM Sans', sans-serif; background: rgba(255,255,255,.5); }
 .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--coral); }
 
-@media (max-width: 720px) {
+/* ---------- responsive ---------- */
+
+/* Nav links can outgrow the screen before anything else does — let them
+   scroll horizontally instead of wrapping or overflowing the page. */
+.nav-links { -ms-overflow-style: none; scrollbar-width: none; }
+.nav-links::-webkit-scrollbar { display: none; }
+
+@media (max-width: 900px) {
   .editor-stage { flex-direction: column; align-items: center; }
-  .hud-topbar { flex-wrap: wrap; gap: 10px; }
-  .hero-title { font-size: 36px; }
+  .strip-wrap, .editor-panel { width: min(320px, 100%); }
+  .editor-strip { width: 100%; }
+}
+
+@media (max-width: 720px) {
+  .site-nav { padding: 12px 16px; }
+  .nav-links { gap: 16px; overflow-x: auto; max-width: 58vw; padding-bottom: 2px; }
+  .nav-links button { white-space: nowrap; }
+
+  .landing-stage { min-height: calc(100vh - 54px); padding: 24px 16px; }
+  .polaroid { width: 92px; }
+  .polaroid-left { left: 1%; top: 8%; }
+  .polaroid-right { right: 1%; bottom: 6%; }
+  .hero-card { padding: 38px 22px; }
+  .hero-title { font-size: 34px; }
+  .hero-tagline { font-size: 17px; }
+  .hero-subactions { flex-wrap: wrap; }
+
+  .setup-stage { padding: 28px 12px 60px; }
+  .setup-card { padding: 26px 20px; }
+  .setup-heading { font-size: 19px; }
+  .option-row { gap: 8px; }
+  .option-card { min-width: 100px; padding: 12px; }
+
+  .camera-stage { height: calc(100vh - 54px); }
+  .hud-topbar { flex-direction: column; align-items: stretch; gap: 8px; left: 10px; right: 10px; top: 10px; }
+  .hud-pill { justify-content: center; text-align: center; padding: 7px 10px; }
+  .hud-pill-status { white-space: normal; line-height: 1.4; }
+  .hud-center-stack { order: -1; }
+  .cam-back-btn { left: 10px; bottom: 10px; padding: 7px 12px; }
+  .solved-card { bottom: 5%; padding: 12px 20px; max-width: 86vw; }
+  .solved-title { font-size: 17px; }
+
+  .printer-slot, .printing-strip { width: min(220px, 82vw); }
+  .printing-label { font-size: 20px; }
+
+  .editor-page { padding: 28px 14px 70px; }
+  .editor-stage { gap: 34px; }
+  .fab-trash { right: 16px; bottom: 16px; width: 44px; height: 44px; }
+
+  .simple-page { padding: 44px 18px 70px; }
+  .simple-title { font-size: 30px; }
+  .contact-form { width: 100%; padding: 24px; }
+}
+
+@media (max-width: 420px) {
+  .nav-links { max-width: 46vw; gap: 12px; }
+  .hero-title { font-size: 28px; }
+  .option-row { flex-direction: column; }
+  .option-card { min-width: 0; }
 }
