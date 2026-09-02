@@ -11,16 +11,21 @@
     theme: {
       extend: {
         colors: {
-          navy: "#2f4f6f",
-          "navy-dark": "#20374e",
-          "surface-bright": "#f6f1e4",
-          cream: "#e9e4d8",
-          pink: "#f4b8c1",
-          "cool-blue": "#a9c8e8",
+          ink: "#1d2528",
+          "muted-ink": "#6f7776",
+          paper: "#f4f0e7",
+          navy: "#e96f5b",
+          "navy-dark": "#c65348",
+          "surface-bright": "#f4f0e7",
+          cream: "#f0dfb8",
+          pink: "#efb7b7",
+          "cool-blue": "#a8c8d2",
         },
         fontFamily: {
-          display: ["'Space Mono'", "monospace"],
-          type: ["'Courier Prime'", "monospace"],
+          display: ["'DM Serif Display'", "Georgia", "serif"],
+          type: ["'DM Sans'", "sans-serif"],
+          mono: ["'Space Mono'", "monospace"],
+          hand: ["'Caveat'", "cursive"],
         },
       },
     },
@@ -28,7 +33,7 @@
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/style.css" />
@@ -76,7 +81,8 @@
         <div class="washi-tape washi-top-left"></div>
 
         <div class="setup-section">
-          <h2 class="setup-heading">01 / SELECT GRID SIZE</h2>
+          <span class="setup-label">01 / GRID SIZE</span>
+          <h2 class="setup-heading">Select your grid size.</h2>
           <div class="option-row" data-group="gridSize">
             <button class="option-card" data-value="3">
               <span class="mini-grid grid-3"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
@@ -92,7 +98,8 @@
         </div>
 
         <div class="setup-section">
-          <h2 class="setup-heading">02 / CHOOSE LAYOUT</h2>
+          <span class="setup-label">02 / LAYOUT</span>
+          <h2 class="setup-heading">Choose your layout.</h2>
           <div class="option-row" data-group="layout">
             <button class="option-card" data-value="2"><span class="option-number">2</span><span class="option-label">2 Photos</span><span class="material-symbols-outlined option-check">check_circle</span></button>
             <button class="option-card" data-value="3"><span class="option-number">3</span><span class="option-label">3 Photos</span><span class="material-symbols-outlined option-check">check_circle</span></button>
@@ -101,7 +108,8 @@
         </div>
 
         <div class="setup-section">
-          <h2 class="setup-heading">03 / CHOOSE FILTER</h2>
+          <span class="setup-label">03 / FILTER</span>
+          <h2 class="setup-heading">Choose your filter.</h2>
           <div class="chip-row" data-group="filter">
             <button class="chip" data-value="original">Original</button>
             <button class="chip" data-value="bw">B&amp;W</button>
