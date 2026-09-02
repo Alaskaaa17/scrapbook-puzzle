@@ -21,6 +21,11 @@ export function isSolved(tiles: number[]): boolean {
   return tiles.every((tile, index) => tile === (index === tiles.length - 1 ? 0 : index + 1));
 }
 
+/** How many non-blank tiles currently sit in their solved position. */
+export function countCorrectlyPlaced(tiles: number[]): number {
+  return tiles.filter((tile, index) => tile !== 0 && tile === index + 1).length;
+}
+
 export function neighborsOf(pos: number, size: number): number[] {
   const row = Math.floor(pos / size);
   const col = pos % size;

@@ -24,7 +24,7 @@ import {
 import { StickerLayer, type PlacedSticker } from "@/components/StickerLayer";
 import { captureSquareFrame, waitForVideoFrame } from "@/lib/captureFrame";
 import type { FilterId } from "@/lib/filters";
-import { isSolved, neighborsOf, shufflePuzzle, slideTile } from "@/lib/puzzle";
+import { countCorrectlyPlaced, isSolved, neighborsOf, shufflePuzzle, slideTile } from "@/lib/puzzle";
 import { useHandTracking, type HandFrameState } from "@/hooks/useHandTracking";
 
 type Step = "setup" | "puzzle" | "strip";
@@ -319,7 +319,7 @@ export default function Home() {
             </div>
 
             <div className="game-panel">
-              <div className="game-heading"><div><span className="mono-label coral">YOUR TURN</span><h2>Solve to unlock<br /><em>the flash.</em></h2></div><span className="puzzle-count">{tiles.filter(Boolean).length} / {tiles.length - 1}<small>pieces placed</small></span></div>
+              <div className="game-heading"><div><span className="mono-label coral">YOUR TURN</span><h2>Solve to unlock<br /><em>the flash.</em></h2></div><span className="puzzle-count">{countCorrectlyPlaced(tiles)} / {tiles.length - 1}<small>pieces placed</small></span></div>
               <div className={`puzzle-grid grid-${gridSize}`} style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }} aria-label="Sliding puzzle">
                 {tiles.map((tile, index) => {
                   const isHover = hoverTile === index;

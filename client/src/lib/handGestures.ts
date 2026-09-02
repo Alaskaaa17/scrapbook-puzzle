@@ -4,18 +4,26 @@ export interface Landmark {
   z: number;
 }
 
-function dist2D(a: Landmark, b: Landmark): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
+/**
+ * 3D distance, not just the x/y screen-plane distance. A hand reaching
+ * toward the camera foreshortens in 2D — fingertips can appear to bunch up
+ * near the wrist even fully extended — so relying on x/y alone made an
+ * ordinary "reach toward the webcam" read as a pinch or a fist. MediaPipe's
+ * z (relative depth) tells extended-but-foreshortened apart from actually
+ * curled/pinched.
+ */
+function dist3D(a: Landmark, b: Landmark): number {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
 export function isPinching(landmarks: Landmark[]): boolean {
-  return dist2D(landmarks[4], landmarks[8]) < 0.06;
+  return dist3D(landmarks[4], landmarks[8]) < 0.055;
 }
 
 /**
- * A fist is detected when the four non-thumb fingertips are all curled in
+ * A fist is detected when all four non-thumb fingertips are curled in
  * toward the palm (tip closer to the wrist than the corresponding PIP
- * joint is) — a cheap heuristic that doesn't need 3D depth.
+ * joint is, in 3D).
  */
 export function isFistShape(landmarks: Landmark[]): boolean {
   const wrist = landmarks[0];
@@ -24,9 +32,7 @@ export function isFistShape(landmarks: Landmark[]): boolean {
 
   let curledCount = 0;
   for (let i = 0; i < fingerTips.length; i++) {
-    if (dist2D(landmarks[fingerTips[i]], wrist) < dist2D(landmarks[fingerPips[i]], wrist)) curledCount++;
+    if (dist3D(landmarks[fingerTips[i]], wrist) < dist3D(landmarks[fingerPips[i]], wrist)) curledCount++;
   }
-  // Require every finger curled, not just most — a relaxed or pointing hand
-  // can look like a 3-out-of-4 "fist" under this 2D-only heuristic.
   return curledCount === fingerTips.length;
 }
