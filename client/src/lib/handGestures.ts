@@ -26,5 +26,7 @@ export function isFistShape(landmarks: Landmark[]): boolean {
   for (let i = 0; i < fingerTips.length; i++) {
     if (dist2D(landmarks[fingerTips[i]], wrist) < dist2D(landmarks[fingerPips[i]], wrist)) curledCount++;
   }
-  return curledCount >= 3;
+  // Require every finger curled, not just most — a relaxed or pointing hand
+  // can look like a 3-out-of-4 "fist" under this 2D-only heuristic.
+  return curledCount === fingerTips.length;
 }
